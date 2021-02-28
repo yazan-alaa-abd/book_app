@@ -65,19 +65,22 @@ function handle404(rq, res) {
 }
 // .................................................................... data entity
 function BookResult(book) {
+        var modifiedImg = book.volumeInfo.imageLinks.thumbnail.split(":")[1];
     this.title = book.volumeInfo.title || 'no title';
     this.author = book.volumeInfo.authors || 'Author unkown';
     this.description = book.volumeInfo.description || 'No discription';
-    this.imgURL = book.volumeInfo.imageLinks.thumbnail || `https://i.imgur.com/J5LVHEL.jpg`;
+    this.imgURL = `https:${modifiedImg}`;
+
 
 }
 
-// const regex = / (http){0}s /g
-// img.
-//     if(regex){
-//     img.replace('')
-// }else if ()
 
+app.get('*',(req,res)=>{
+    res.status(404).send('this route dose not exist !! ')
+})
+app.get('/error',(req,res)=>{
+    res.render('pages/error');
+})
 
 app.listen(PORT, () => {
     console.log('server is running perfectly .. ', PORT)
