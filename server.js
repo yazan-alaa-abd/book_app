@@ -69,7 +69,15 @@ function BookResult(book) {
     this.author = book.volumeInfo.authors || 'Author unkown';
     this.description = book.volumeInfo.description || 'No discription';
     this.imgURL = book.volumeInfo.imageLinks.thumbnail || `https://i.imgur.com/J5LVHEL.jpg`;
+
 }
+
+// const regex = / (http){0}s /g
+// img.
+//     if(regex){
+//     img.replace('')
+// }else if ()
+
 
 app.listen(PORT, () => {
     console.log('server is running perfectly .. ', PORT)
