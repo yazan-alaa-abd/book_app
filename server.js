@@ -4,7 +4,6 @@ const express = require('express');
 const cors = require('cors');
 const superagent = require('superagent');
 const path = require('path');
-const { json } = require('express');
 
 // ............................................................................ configurations 
 let app = express();
@@ -19,32 +18,50 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', handelHome);
 app.post('/book', hanelSearch);
 app.get('/new', handelSearchForm);
-
+app.get('*', handle404)
 
 // ................................................................................... handlers
 function handelHome(req, res) {
-    res.render('pages/index')
+    try {
+        res.render('pages/index')
+    } catch (error) {
+        res.send('error : ', error)
+    }
+
 }
 
 function handelSearchForm(req, res) {
-    // console.log(req.query);
-    res.render('pages/searches/new')
+    try {
+        res.render('pages/searches/new')
+    } catch (error) {
+        res.send('error : ', error)
+    }
 }
 
-
 function hanelSearch(req, res) {
-    let url = 'https://www.googleapis.com/books/v1/volumes';
-    // console.log('handelSeach data ... ', req.body);
-    var objectOfData = {
-        q: req.body.search + ' in' + req.body.term
+    try {
+        let url = 'https://www.googleapis.com/books/v1/volumes';
+        // console.log('handelSeach data ... ', req.body);
+        var objectOfData = {
+            q: req.body.search + ' in' + req.body.term
+        }
+        superagent.get(url).query(objectOfData).then(data => {
+            let books = data.body.items.map(book => {
+                return new BookResult(book);
+            });
+            res.render('pages/searches/show', { booksList: books });
+        })
+    } catch (error) {
+        res.send('an error occured : ', error)
     }
+}
 
-    superagent.get(url).query(objectOfData).then(data => {
-        let books = data.body.items.map(book => {
-            return new BookResult(book);
-        });
-        res.render('pages/searches/show', { booksList: books });
-    })
+function handle404(rq, res) {
+    try {
+        res.send('404 page not found')
+    } catch (error) {
+        res.send('an error occured : ', error)
+    }
 }
 // .................................................................... data entity
 function BookResult(book) {
