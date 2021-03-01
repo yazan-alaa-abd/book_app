@@ -1,11 +1,12 @@
 'use strict';
-// The imports
+// ......................................................................................IMPORTS
 const express = require('express');
 const cors = require('cors');
 const superagent = require('superagent');
 const path = require('path');
+const pg = require('pg');
 
-// ............................................................................ configurations 
+// ...............................................................................CONFIGURATIONS
 let app = express();
 app.use(cors());
 app.set('view engine', 'ejs')
@@ -14,28 +15,30 @@ require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 app.use(express.static(path.join(__dirname, 'public')));
 
-// .............................................................................routes-endPoint
+
+// const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+const client = new pg.Client(process.env.DATABASE_URL);
+
+// ...........................................................................ROUTERS END POINTS
 app.get('/', handelHome);
-app.post('/book', hanelSearch);
-app.get('/new', handelSearchForm);
-app.get('*', handle404)
+app.post('/searches', hanelSearch);
+app.get('/searches/new', handelSearchForm);
+app.get('*', handle404);
 
-// ................................................................................... handlers
+// ...........................................................................HANDLERS FUNCTIONS
 function handelHome(req, res) {
-    try {
-        res.render('pages/index')
-    } catch (error) {
-        res.send('error : ', error)
-    }
+    let selectQuery = 'SELECT * FROM books;';
 
+    client.query(selectQuery)
+        .then(data => {
+            // console.log(data)
+            res.render('pages/index', { data: data.rows, total: data.rowCount })
+        })
+        .catch(error => console.log(error))
 }
 
 function handelSearchForm(req, res) {
-    try {
-        res.render('pages/searches/new')
-    } catch (error) {
-        res.send('error : ', error)
-    }
+    res.render('pages/searches/new')
 }
 
 function hanelSearch(req, res) {
@@ -57,31 +60,30 @@ function hanelSearch(req, res) {
 }
 
 function handle404(rq, res) {
-    try {
-        res.send('404 page not found')
-    } catch (error) {
-        res.send('an error occured : ', error)
-    }
+    res.send('404 page not found')
 }
-// .................................................................... data entity
+
+app.get('*', (req, res) => {
+    res.send('this route dose not exist !! ')
+})
+
+app.get('/error', (req, res) => {
+    res.render('pages/error');
+})
+
+// ................................................................................. DATA MODEL
 function BookResult(book) {
-        var modifiedImg = book.volumeInfo.imageLinks.thumbnail.split(":")[1];
+    var modifiedImg = book.volumeInfo.imageLinks.thumbnail.split(":")[1];
     this.title = book.volumeInfo.title || 'no title';
     this.author = book.volumeInfo.authors || 'Author unkown';
     this.description = book.volumeInfo.description || 'No discription';
     this.imgURL = `https:${modifiedImg}`;
-
-
 }
 
-
-app.get('*',(req,res)=>{
-    res.status(404).send('this route dose not exist !! ')
-})
-app.get('/error',(req,res)=>{
-    res.render('pages/error');
-})
-
-app.listen(PORT, () => {
-    console.log('server is running perfectly .. ', PORT)
-})
+client.connect()
+    .then(() => {
+        app.listen(PORT, () => {
+            console.log('server is running perfectly .. ', PORT)
+        })
+    })
+    .catch(error => console.log('error occured while connecting to database : ', error))
