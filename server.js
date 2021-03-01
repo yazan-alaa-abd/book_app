@@ -29,6 +29,27 @@ app.get('*', handle404);
 
 // ...........................................................................HANDLERS FUNCTIONS
 
+app.post('/books',(req,res)=>{
+    // console.log(req.body.isbn) 
+    /* image title author description*/
+    let book =req.body;
+    let insertQUery ='INSERT INTO books (author,title,isbn,image_url, description) VALUES ($1,$2,$3,$4,$5);';
+    let safeValues = [
+        book.author,
+        book.title,
+        book.isbn,
+        book.imgURL,
+        book.description
+    ]
+    // console.log(safeValues)
+    client.query(insertQUery, safeValues).then(data =>{
+        // let getData =data.rows[0]
+        console.log(data.rows)
+        res.redirect('/');
+    }).catch(err => console.log(err))
+    
+})
+
 // let dbQuery = 'INSERT INTO books (author, title,isbn,image_url, description) VALUES ($1, $2 , $3 , $4 , $5)';
 // let saveValues = [
 //     "Karen M. Ross",
@@ -43,17 +64,16 @@ app.get('*', handle404);
 
 function handelHome(req, res) {
     let selectQuery = 'SELECT * FROM books;';
-
     client.query(selectQuery)
         .then(data => {
-            // console.log(data.rows[1].id);
+    
             res.render('pages/index', { data: data.rows, total: data.rowCount })
         })
         .catch(error => console.log(error))
 }
 
 function handelSingularBook(req , res) {
-    // console.log(req.body)
+
     let query = 'SELECT * FROM books where id =$1';
     let saveValue = [req.params.id];
     client.query(query , saveValue).then( data =>{
@@ -70,10 +90,9 @@ function handelSearchForm(req, res) {
 }
 
 function hanelSearch(req, res) {
-    try {
         let url = 'https://www.googleapis.com/books/v1/volumes';
         // console.log('handelSeach data ... ', req.body);
-        var objectOfData = {
+        let objectOfData = {
             q: req.body.search + ' in' + req.body.term
         }
         superagent.get(url).query(objectOfData).then(data => {
@@ -82,9 +101,7 @@ function hanelSearch(req, res) {
             });
             res.render('pages/searches/show', { booksList: books });
         })
-    } catch (error) {
-        res.send('an error occured : ', error)
-    }
+
 }
 
 function handle404(rq, res) {
