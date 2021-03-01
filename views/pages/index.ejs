@@ -24,6 +24,12 @@
           </h4>
           <p> Description : <%= item.description %>
           </p>
+          <h3>
+            isbn: <%= item.isbn %>
+          </h3>
+          <%- console.log(item.id)%>
+          <button> <a href="/books/ <%= item.id %>"> View Details
+            </a></button>
       </article>
       <% }) %>
   </main>
