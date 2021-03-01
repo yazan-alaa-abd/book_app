@@ -5,6 +5,7 @@ const cors = require('cors');
 const superagent = require('superagent');
 const path = require('path');
 const pg = require('pg');
+const { title } = require('process');
 
 // ...............................................................................CONFIGURATIONS
 let app = express();
@@ -23,18 +24,45 @@ const client = new pg.Client(process.env.DATABASE_URL);
 app.get('/', handelHome);
 app.post('/searches', hanelSearch);
 app.get('/searches/new', handelSearchForm);
+app.get('/books/:id', handelSingularBook)
 app.get('*', handle404);
 
 // ...........................................................................HANDLERS FUNCTIONS
+
+// let dbQuery = 'INSERT INTO books (author, title,isbn,image_url, description) VALUES ($1, $2 , $3 , $4 , $5)';
+// let saveValues = [
+//     "Karen M. Ross",
+//     "Index to the English Catalogue of Books ...",
+//     "123-4567-789",
+//     "http://books.google.com/books/content?id=LK7fAAAAMAAJ&printsec=frontcover&img=1&zoom=5&edge=curl&source=gbs_api",
+//     "description An essential handbook for international lawyers and students Focusing on vocabulary, Essential Legal English in Context introduces the US legal system and its terminology. Designed especially for foreign-trained lawyers and students whose first language is not English, the book is a must-read for those who want to expand their US legal vocabulary and basic understanding of US government. Ross uses a unique approach by selecting legal terms that arise solely within the context of the levels and branches of US government, including terminology related to current political issues such as partisanship. Inspired by her students’ questions over her years of teaching"
+
+// ]; 
+
+// client.query(dbQuery , saveValues)
+
 function handelHome(req, res) {
     let selectQuery = 'SELECT * FROM books;';
 
     client.query(selectQuery)
         .then(data => {
-            // console.log(data)
+            // console.log(data.rows[1].id);
             res.render('pages/index', { data: data.rows, total: data.rowCount })
         })
         .catch(error => console.log(error))
+}
+
+function handelSingularBook(req , res) {
+    // console.log(req.body)
+    let query = 'SELECT * FROM books where id =$1';
+    let saveValue = [req.params.id];
+    client.query(query , saveValue).then( data =>{
+        
+        let object = {
+            item:data.rows[0]
+        }
+        res.render('pages/books/detail' , object);
+    });
 }
 
 function handelSearchForm(req, res) {
