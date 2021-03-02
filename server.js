@@ -17,18 +17,16 @@ app.set('view engine', 'ejs')
 require('dotenv').config();
 const PORT = process.env.PORT || 3000;
 
-const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
-// const client = new pg.Client(process.env.DATABASE_URL);
+// const client = new pg.Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+const client = new pg.Client(process.env.DATABASE_URL);
 
 // ...........................................................................ROUTERS END POINTS
 app.get('/', handelHome);
 app.get('/searches/new', handelSearchForm);
 app.get('/books/:id', handelSingularBook);
-app.get('/error', handleError);
 
 app.post('/searches', hanelSearch);
 app.post('/books', handleAddBook)
-
 
 app.get('*', handle404);
 // ...........................................................................HANDLERS FUNCTIONS
@@ -36,7 +34,7 @@ app.get('*', handle404);
 function handleAddBook(req, res) {
     let book = req.body;
 
-    let insertQUery = 'INSERT INTO books (author,title,isbn,image_url, description) VALUES ($1,$2,$3,$4,$5);';
+    let insertQUery = 'INSERT INTO books (author,title,isbn,image_url, description) VALUES ($1,$2,$3,$4,$5) RETURNING id;';
     let safeValues = [
         book.author,
         book.title,
@@ -46,8 +44,9 @@ function handleAddBook(req, res) {
     ]
 
     client.query(insertQUery, safeValues)
-        .then(() => {
-            res.render('/');
+        .then((data) => {
+            console.log(data.rows[0])
+            res.redirect('/books/' + data.rows[0].id);
         }).catch(err => console.log(err))
 
 }
@@ -93,16 +92,8 @@ function hanelSearch(req, res) {
         })
 }
 
-function handle404(rq, res) {
-    res.send('404 page not found')
-}
-
 function handle404(req, res) {
-    res.send('this route dose not exist !!');
-}
-
-function handleError(req, res) {
-    res.render('pages/error');
+    res.send('404! this route dose not exist !!');
 }
 
 // ................................................................................. DATA MODEL
@@ -119,8 +110,6 @@ client.connect()
         app.listen(PORT, () => console.log('server is running perfectly .. ', PORT))
     })
     .catch(error => console.log('error occured while connecting to database : ', error));
-
-
 
 
 
